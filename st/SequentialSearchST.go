@@ -2,15 +2,18 @@ package main
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 type St interface {
-	Put(k STComparableKey, value interface{})
-	Get(k STComparableKey) interface{}
-	Del(k STComparableKey) bool
-	Contains(k STComparableKey) bool
-	IsEmpty() bool
+	Put(k string, value interface{})
+	Get(k string) interface{}
+	Del(k string) bool
 	Keys() STIterator
+
+	Contains(k string) bool
+	IsEmpty() bool
 	Size() int
 }
 
@@ -19,24 +22,24 @@ type St interface {
 //	Compare(key Comparable) int
 //}
 
+//type STComparableKey struct {
+//	K int
+//}
+
+//func (k *STComparableKey) Compare(key STComparableKey) int {
+//	//c := Comparable(k)
+//	//return c.Compare(key)
+//	return k.K - STComparableKey(key).K
+//}
+
 type STIterator struct {
-	SKeys []STComparableKey
-}
-
-type STComparableKey struct {
-	K int
-}
-
-func (k *STComparableKey) Compare(key STComparableKey) int {
-	//c := Comparable(k)
-	//return c.Compare(key)
-	return k.K - STComparableKey(key).K
+	SKeys []string
 }
 
 // inner data
 type StNode struct {
 	Next  *StNode
-	Key   STComparableKey
+	Key   string
 	Value interface{}
 }
 
@@ -54,26 +57,26 @@ func NewSequentialSearchST() *SequentialSearchST {
 	return st
 }
 
-func (st SequentialSearchST) Size() int {
+func (st *SequentialSearchST) Size() int {
 	return st.N
 }
 
-func (st SequentialSearchST) IsEmpty() bool {
+func (st *SequentialSearchST) IsEmpty() bool {
 	return st.Size() == 0
 }
 
-func (st SequentialSearchST) Contains(k STComparableKey) bool {
+func (st *SequentialSearchST) Contains(k string) bool {
 	return nil != st.Get(k)
 }
 
-func (st SequentialSearchST) Put(key STComparableKey, value interface{}) {
+func (st *SequentialSearchST) Put(k string, value interface{}) {
 
 	// 暂时先不做校验，后续补充上
 	//if(nil == key){
 	//}
 
 	for node := st.First; nil != node; node = node.Next {
-		if node.Key.Compare(key) == 0 {
+		if strings.Compare(node.Key, k) == 0 {
 			// 如果key命中了则更新value
 			node.Value = value
 			return
@@ -81,19 +84,19 @@ func (st SequentialSearchST) Put(key STComparableKey, value interface{}) {
 	}
 
 	// 每次更新数据都把新数据放到头部,
-	st.First = &StNode{Key: key, Value: value, Next: st.First}
+	st.First = &StNode{Key: k, Value: value, Next: st.First}
 	st.N++
 
 }
 
-func (st SequentialSearchST) Get(k STComparableKey) interface{} {
+func (st *SequentialSearchST) Get(k string) interface{} {
 
 	if st.First == nil {
 		return nil
 	}
 
 	for node := st.First; nil != node; node = node.Next {
-		if node.Key.Compare(k) == 0 {
+		if strings.Compare(node.Key, k) == 0 {
 			return node.Value
 		}
 	}
@@ -101,9 +104,9 @@ func (st SequentialSearchST) Get(k STComparableKey) interface{} {
 	return nil
 }
 
-func (st SequentialSearchST) Keys() STIterator {
+func (st *SequentialSearchST) Keys() STIterator {
 	iterator := STIterator{}
-	iterator.SKeys = make([]STComparableKey, 100, 100)
+	iterator.SKeys = make([]string, 100, 100)
 
 	if st.First == nil {
 		return iterator
@@ -119,18 +122,18 @@ func (st SequentialSearchST) Keys() STIterator {
 //  -------------------上面比较简单，为啥我老想用双向链表
 
 //  写过一次了还想着用pre?
-func (st SequentialSearchST) Del(k STComparableKey) {
+func (st *SequentialSearchST) Del(k string) {
 	st.First = st.DelWithNode(st.First, k)
 }
 
 //  重点
 //  写过一次了还想着用pre? 一会debug
-func (st SequentialSearchST) DelWithNode(s *StNode, k STComparableKey) *StNode {
+func (st SequentialSearchST) DelWithNode(s *StNode, k string) *StNode {
 	if s == nil {
 		return nil
 	}
 
-	if s.Key.Compare(k) == 0 {
+	if strings.Compare(s.Key, k) == 0 {
 		st.N--
 		return s.Next
 	}
@@ -145,9 +148,15 @@ func main() {
 	fmt.Println(st.Size())
 	fmt.Println(st.IsEmpty())
 
-	st.Put(STComparableKey{1}, 1)
-	st.Put(STComparableKey{2}, 2)
+	st.Put(strconv.Itoa(3), 3)
+	st.Put(strconv.Itoa(1), 1)
+	st.Put(strconv.Itoa(2), 2)
+	st.Put(strconv.Itoa(4), 4)
+	st.Put(strconv.Itoa(5), 5)
+
 	fmt.Println(st.Keys().SKeys)
+
+	st.Del(strconv.Itoa(3))
 
 	//strings.Compare("a","a")
 
